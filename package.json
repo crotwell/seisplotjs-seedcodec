@@ -2,7 +2,7 @@
   "name": "seisplotjs-seedcodec",
   "version": "0.0.1",
   "description": "Javascript library for decompressing seismic data.",
-  "main": "seedcodec.js",
+  "main": "./lib/seedcodec.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "babel --presets es2015 -d lib/ src/",
