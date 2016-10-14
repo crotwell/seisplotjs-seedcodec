@@ -90,9 +90,9 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
     case INTEGER:
       // 32 bit integers
       if(dataView.length < 4 * numSamples) {
-          throw "Not enough bytes for "
+          throw new CodecException("Not enough bytes for "
                 + numSamples + " 32 bit data points, only "
-                + dataView.length + " bytes.";
+                + dataView.length + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getInt32(offset, littleEndian);
@@ -102,9 +102,9 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
     case FLOAT:
       // 32 bit floats
       if(dataView.length < 4 * numSamples) {
-        throw "Not enough bytes for "
+        throw new CodecException("Not enough bytes for "
               + numSamples + " 32 bit data points, only "
-              + dataView.length + " bytes.";
+              + dataView.length + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getFloat32(offset, littleEndian);
@@ -114,9 +114,9 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
     case DOUBLE:
       // 64 bit doubles
       if(dataView.length < 8 * numSamples) {
-          throw "Not enough bytes for "
+          throw new CodecException("Not enough bytes for "
                 + numSamples + " 64 bit data points, only "
-                + dataView.length + " bytes.";
+                + dataView.length + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getFloat64(offset, littleEndian);
@@ -162,7 +162,7 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
   // a previous value which acts as a starting constant for continuing differences integration.  At the
   // very start, bias is set to 0.
   if (dataView.byteLength % 64 != 0) {
-    throw "encoded data length is not multiple of 64 bytes (" + dataView.length + ")"; 
+    throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.length + ")");
   }
   let samples = [];
   let tempSamples;
@@ -192,7 +192,7 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
     }
   }  // end for each frame...
   if (current != numSamples) {
-    throw "Number of samples decompressed doesn't match number in header: "+current+" != "+numSamples;
+    throw new CodecException("Number of samples decompressed doesn't match number in header: "+current+" != "+numSamples);
   }
   // ignore last sample check???
   //if (end != samples[numSamples-1]) {
@@ -258,7 +258,7 @@ function extractSteim1Samples(dataView, offset,  littleEndian) {
         temp[currNum++] =dataView.getInt32(offset+(i*4), littleEndian);
         break;
       default:
-        throw "unreachable case: "+currNibble;
+        throw new CodecException("unreachable case: "+currNibble);
         //System.out.println("default");
     }
   }
@@ -284,7 +284,7 @@ function extractSteim1Samples(dataView, offset,  littleEndian) {
  */
 steim2.decode = function (dataView, numSamples, swapBytes, bias) {
   if (dataView.byteLength % 64 != 0) {
-    throw "encoded data length is not multiple of 64 bytes (" + dataView.length + ")"; 
+    throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.length + ")");
   }
   let samples = [];
   let tempSamples;
@@ -319,7 +319,7 @@ steim2.decode = function (dataView, numSamples, swapBytes, bias) {
     //System.err.println("DEBUG: end of frame " + i);
   }  // end for each frame...
   if (current != numSamples) {
-    throw "Number of samples decompressed doesn't match number in header: "+current+" != "+numSamples;
+    throw new CodecException("Number of samples decompressed doesn't match number in header: "+current+" != "+numSamples);
   }
   // ignore last sample check???
   //if (end != samples[numSamples-1]) {
