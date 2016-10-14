@@ -1,3 +1,4 @@
+/*global Int32Array*/
 /**
  * Philip Crotwell
  * University of South Carolina, 2014
@@ -46,6 +47,23 @@
   export let steim1 = {};
   export let steim2 = {};
 
+  export class CodecException extends Error {
+    constructor(message) {
+      super(message);
+      this.message = message;
+      this.name = 'CodecException';
+    }
+  }
+
+  export class UnsupportedCompressionType extends Error {
+    constructor(message) {
+      super(message);
+      this.message = message;
+      this.name = 'UnsupportedCompressionType';
+    }
+  }
+
+
   export function decompress(compressionType, dataView, numSamples, littleEndian) {
     // in case of record with no data points, ex detection blockette, which often have compression type
     // set to 0, which messes up the decompresser even though it doesn't matter since there is no data.
@@ -53,9 +71,9 @@
         return [];
     }
 
-    var out = [];
-    var offset = 0;
-    var i;
+    let out = [];
+    let offset = 0;
+    let i;
     switch(compressionType){
         case SHORT:
         case DWWSSN:
@@ -96,7 +114,7 @@
             break;
         case DOUBLE:
             // 64 bit doubles
-            if(b.length < 8 * numSamples) {
+            if(dataView.length < 8 * numSamples) {
                 throw "Not enough bytes for "
                         + numSamples + " 64 bit data points, only "
                         + dataView.length + " bytes.";
@@ -116,11 +134,11 @@
             break;   
         default:
             // unknown format????
-            throw new UnsupportedCompressionType("Type " + type
+            throw new UnsupportedCompressionType("Type " + compressionType
                     + " is not supported at this time.");
     } // end of switch ()
     return out;
-};
+}
   
 
 /**
@@ -146,17 +164,16 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
     // a previous value which acts as a starting constant for continuing differences integration.  At the
     // very start, bias is set to 0.
     if (dataView.byteLength % 64 != 0) {
-        throw "encoded data length is not multiple of 64 bytes (" + b.length + ")"; 
+        throw "encoded data length is not multiple of 64 bytes (" + dataView.length + ")"; 
     }
-    var samples = [];
-    var tempSamples;
-    var numFrames = dataView.byteLength / 64;
-    var current = 0;
-    var start=0
-    var end=0;
-    var firstData=0;
-    var lastValue = 0;
-    var i, j;
+    let samples = [];
+    let tempSamples;
+    let numFrames = dataView.byteLength / 64;
+    let current = 0;
+    let start=0;
+    let firstData=0;
+    let lastValue = 0;
+    let i, j;
 
     for (i=0; i< numFrames; i++ ) {
         tempSamples = extractSteim1Samples(dataView, i*64, littleEndian);   // returns only differences except for frame 0
@@ -165,7 +182,7 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
             lastValue = bias; // assign our X(-1)
             // x0 and xn are in 1 and 2 spots
             start = tempSamples[1];  // X(0) is byte 1 for frame 0
-            end = tempSamples[2];    // X(n) is byte 2 for frame 0
+            //  end = tempSamples[2];    // X(n) is byte 2 for frame 0
             firstData = 3; // d(0) is byte 3 for frame 0
             // if bias was zero, then we want the first sample to be X(0) constant
             if (bias == 0) lastValue = start - tempSamples[3];  // X(-1) = X(0) - d(0)
@@ -184,7 +201,7 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
     //    throw new SteimException("Last sample decompressed doesn't match value x(n) value in Steim1 record: "+samples[numSamples-1]+" != "+end);
     //}
     return samples;
-}
+};
   
 /**
  * Extracts differences from the next 64 byte frame of the given compressed
@@ -200,11 +217,11 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
  */
 function extractSteim1Samples(dataView, offset,  littleEndian) {
     /* get nibbles */
-    var nibbles = dataView.getInt32(offset, littleEndian);
-    var currNibble = 0;
-    var temp = [];  // 4 samples * 16 longwords, can't be more than 64
-    var currNum = 0;
-    var i, n;
+    let nibbles = dataView.getInt32(offset, littleEndian);
+    let currNibble = 0;
+    let temp = [];  // 4 samples * 16 longwords, can't be more than 64
+    let currNum = 0;
+    let i, n;
     for (i=0; i<16; i++) {   // i is the word number of the frame starting at 0
         //currNibble = (nibbles >>> (30 - i*2 ) ) & 0x03; // count from top to bottom each nibble in W(0)
         currNibble = (nibbles >> (30 - i*2) ) & 0x03; // count from top to bottom each nibble in W(0)
@@ -269,19 +286,18 @@ function extractSteim1Samples(dataView, offset,  littleEndian) {
  */
 steim2.decode = function (dataView, numSamples, swapBytes, bias) {
 	if (dataView.byteLength % 64 != 0) {
-		throw "encoded data length is not multiple of 64 bytes (" + b.length + ")"; 
+		throw "encoded data length is not multiple of 64 bytes (" + dataView.length + ")"; 
 	}
-	var samples = [];
-	var tempSamples;
-	var numFrames = dataView.byteLength / 64;
-	var current = 0;
-	var start=0
-	var end=0;
-	var firstData=0;
-	var lastValue = 0;
+	let samples = [];
+	let tempSamples;
+	let numFrames = dataView.byteLength / 64;
+	let current = 0;
+	let start=0;
+	let firstData=0;
+	let lastValue = 0;
       
 	//System.err.println("DEBUG: number of samples: " + numSamples + ", number of frames: " + numFrames + ", byte array size: " + b.length);
-	for (var i=0; i< numFrames ; i++ ) {
+	for (let i=0; i< numFrames ; i++ ) {
 		tempSamples = extractSteim2Samples(dataView, i*64, swapBytes);   // returns only differences except for frame 0
 		firstData = 0; // d(0) is byte 0 by default
 		if (i==0) {   // special case for first frame
@@ -289,14 +305,14 @@ steim2.decode = function (dataView, numSamples, swapBytes, bias) {
 			lastValue = bias; // assign our X(-1)
 			// x0 and xn are in 1 and 2 spots
 			start = tempSamples[1];  // X(0) is byte 1 for frame 0
-			end = tempSamples[2];    // X(n) is byte 2 for frame 0
+			// end = tempSamples[2];    // X(n) is byte 2 for frame 0
 			firstData = 3; // d(0) is byte 3 for frame 0
 			//console.log("DEBUG: frame " + i + ", bias = " + bias + ", x(0) = " + start + ", x(n) = " + end);
 			// if bias was zero, then we want the first sample to be X(0) constant
 			if (bias == 0) lastValue = start - tempSamples[3];  // X(-1) = X(0) - d(0)
 		}
 		//System.err.print("DEBUG: ");
-		for (var j = firstData; j < tempSamples.length && current < numSamples; j++) {
+		for (let j = firstData; j < tempSamples.length && current < numSamples; j++) {
 			samples[current] = lastValue + tempSamples[j];  // X(n) = X(n-1) + d(n)
 			lastValue = samples[current];
 			//console.log("d(" + (j-firstData) + ")" + tempSamples[j] + ", x(" + current + ")" + samples[current] + ";");
@@ -312,7 +328,7 @@ steim2.decode = function (dataView, numSamples, swapBytes, bias) {
         //    throw new SteimException("Last sample decompressed doesn't match value x(n) value in Steim2 record: "+samples[numSamples-1]+" != "+end);
         //}
 	return samples;
-}
+};
 	
 
 /**
@@ -329,20 +345,23 @@ steim2.decode = function (dataView, numSamples, swapBytes, bias) {
  */
 function extractSteim2Samples(dataView, offset, swapBytes) {
 	/* get nibbles */
-	var nibbles = dataView.getUint32(offset, swapBytes);
-	var currNibble = 0;
-	var dnib = 0;
-	var temp = new Int32Array(106); //max 106 = 7 samples * 15 long words + 1 nibble int
-	var tempInt;
-	var currNum = 0;
-	for (var i=0; i<16; i++) {
+	let nibbles = dataView.getUint32(offset, swapBytes);
+	let currNibble = 0;
+	let dnib = 0;
+	let temp = new Int32Array(106); //max 106 = 7 samples * 15 long words + 1 nibble int
+	let tempInt;
+	let currNum = 0;
+	let diffCount = 0;  // number of differences
+	let bitSize = 0;    // bit size
+	let headerSize = 0; // number of header/unused bits at top
+	for (let i=0; i<16; i++) {
 		currNibble = (nibbles >> (30 - i*2 ) ) & 0x03;
 		switch (currNibble) {
 			case 0:
 				//System.out.println("0 means header info");
 				// only include header info if offset is 0
 				if (offset == 0) {
-					temp[currNum++] = dataView.getInt32(offset+(i*4), swapBytes)
+					temp[currNum++] = dataView.getInt32(offset+(i*4), swapBytes);
 				}
 				break;
 			case 1:
@@ -380,9 +399,9 @@ function extractSteim2Samples(dataView, offset, swapBytes) {
 				dnib = (tempInt >> 30) & 0x03;
 				// for case 3, we are going to use a for-loop formulation that
 				// accomplishes the same thing as case 2, just less verbose.
-				var diffCount = 0;  // number of differences
-				var bitSize = 0;    // bit size
-				var headerSize = 0; // number of header/unused bits at top
+				diffCount = 0;  // number of differences
+				bitSize = 0;    // bit size
+				headerSize = 0; // number of header/unused bits at top
 				switch (dnib) {
 					case 0:
 						//System.out.println("3,0 means 5 six bit differences");
@@ -406,14 +425,14 @@ function extractSteim2Samples(dataView, offset, swapBytes) {
 						//System.out.println("default");
 				}
 				if (diffCount > 0) {
-					for (var d=0; d<diffCount; d++) {  // for-loop formulation
+					for (let d=0; d<diffCount; d++) {  // for-loop formulation
 						temp[currNum++] = ( tempInt << (headerSize+(d*bitSize)) ) >> (((diffCount-1)*bitSize) + headerSize);
 					}
 				}
 		}
 	}
-	var out = new Int32Array(currNum);
-	for(var i=0; i<currNum; i++) {
+	let out = new Int32Array(currNum);
+	for(let i=0; i<currNum; i++) {
 		out[i] = temp[i];
 	}
 	return out;
