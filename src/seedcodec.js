@@ -1,3 +1,5 @@
+// @flow
+
 /*global Int32Array*/
 /**
  * Philip Crotwell
@@ -6,49 +8,49 @@
  */
 // converted from Steim2.java in seedCodec
 // http://github.com/crotwell/seedcodec/
-        
 
-  
+
+
 // constants for compression types
 
 /** ascii */
-export let ASCII = 0;
+export const ASCII = 0;
 
 /** 16 bit integer, or java short */
-export let SHORT = 1;
+export const SHORT = 1;
 
 /** 24 bit integer */
-export let INT24 = 2;
+export const INT24 = 2;
 
 /** 32 bit integer, or java int */
-export let INTEGER = 3;
+export const INTEGER = 3;
 
 /** ieee float */
-export let FLOAT = 4;
+export const FLOAT = 4;
 
 /** ieee double*/
-export let DOUBLE = 5;
+export const DOUBLE = 5;
 
 /** Steim1 compression */
-export let STEIM1= 10;
+export const STEIM1= 10;
 
 /** Steim2 compression */
-export let STEIM2 = 11;
-    
+export const STEIM2 = 11;
+
 /** CDSN 16 bit gain ranged */
-export let CDSN = 16;
-        
+export const CDSN = 16;
+
 /** (A)SRO */
-export let SRO = 30;
-    
+export const SRO = 30;
+
 /** DWWSSN 16 bit */
-export let DWWSSN = 32;
+export const DWWSSN = 32;
 
 export let steim1 = {};
 export let steim2 = {};
 
 export class CodecException extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.message = message;
     this.name = 'CodecException';
@@ -56,14 +58,14 @@ export class CodecException extends Error {
 }
 
 export class UnsupportedCompressionType extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.message = message;
     this.name = 'UnsupportedCompressionType';
   }
 }
 
-export function decompress(compressionType, dataView, numSamples, littleEndian) {
+export function decompress(compressionType: number, dataView: DataView, numSamples: number, littleEndian: boolean) :Array<number> {
   // in case of record with no data points, ex detection blockette, which often have compression type
   // set to 0, which messes up the decompresser even though it doesn't matter since there is no data.
   if (numSamples == 0) {
@@ -77,10 +79,10 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
     case SHORT:
     case DWWSSN:
       // 16 bit values
-      if(dataView.length < 2 * numSamples) {
+      if(dataView.byteLength < 2 * numSamples) {
         throw new CodecException("Not enough bytes for "
                         + numSamples + " 16 bit data points, only "
-                        + dataView.length + " bytes.");
+                        + dataView.byteLength + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getInt16(offset, littleEndian);
@@ -89,10 +91,10 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
       break;
     case INTEGER:
       // 32 bit integers
-      if(dataView.length < 4 * numSamples) {
+      if(dataView.byteLength < 4 * numSamples) {
           throw new CodecException("Not enough bytes for "
                 + numSamples + " 32 bit data points, only "
-                + dataView.length + " bytes.");
+                + dataView.byteLength + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getInt32(offset, littleEndian);
@@ -101,10 +103,10 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
       break;
     case FLOAT:
       // 32 bit floats
-      if(dataView.length < 4 * numSamples) {
+      if(dataView.byteLength < 4 * numSamples) {
         throw new CodecException("Not enough bytes for "
               + numSamples + " 32 bit data points, only "
-              + dataView.length + " bytes.");
+              + dataView.byteLength + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getFloat32(offset, littleEndian);
@@ -113,10 +115,10 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
       break;
     case DOUBLE:
       // 64 bit doubles
-      if(dataView.length < 8 * numSamples) {
+      if(dataView.byteLength < 8 * numSamples) {
           throw new CodecException("Not enough bytes for "
                 + numSamples + " 64 bit data points, only "
-                + dataView.length + " bytes.");
+                + dataView.byteLength + " bytes.");
       }
       for(i = 0; i < numSamples; i++) {
         out[i] = dataView.getFloat64(offset, littleEndian);
@@ -130,7 +132,7 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
     case STEIM2:
       // steim 2
       out = steim2.decode(dataView, numSamples, littleEndian, 0);
-      break;   
+      break;
     default:
       // unknown format????
       throw new UnsupportedCompressionType("Type " + compressionType
@@ -156,13 +158,13 @@ export function decompress(compressionType, dataView, numSamples, littleEndian) 
  *  @throws SteimException - encoded data length is not multiple of 64
  *  bytes.
  */
-steim1.decode = function (dataView, numSamples, littleEndian, bias) {
+steim1.decode = function (dataView: DataView, numSamples: number, littleEndian: boolean, bias: number) {
   // Decode Steim1 compression format from the provided byte array, which contains numSamples number
   // of samples.  swapBytes is set to true if the value words are to be byte swapped.  bias represents
   // a previous value which acts as a starting constant for continuing differences integration.  At the
   // very start, bias is set to 0.
   if (dataView.byteLength % 64 != 0) {
-    throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.length + ")");
+    throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.byteLength + ")");
   }
   let samples = [];
   let tempSamples;
@@ -200,7 +202,7 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
   //}
   return samples;
 };
-  
+
 /**
  * Extracts differences from the next 64 byte frame of the given compressed
  * byte array (starting at offset) and returns those differences in an int
@@ -213,7 +215,7 @@ steim1.decode = function (dataView, numSamples, littleEndian, bias) {
  * @param swapBytes reverse the endian-ness of the compressed bytes being read
  * @return integer array of difference (and constant) values
  */
-function extractSteim1Samples(dataView, offset,  littleEndian) {
+function extractSteim1Samples(dataView: DataView, offset: number,  littleEndian: boolean) :Array<number> {
   /* get nibbles */
   let nibbles = dataView.getInt32(offset, littleEndian);
   let currNibble = 0;
@@ -264,7 +266,7 @@ function extractSteim1Samples(dataView, offset,  littleEndian) {
   }
   return temp;
 }
-  
+
 /**
  *  Decode the indicated number of samples from the provided byte array and
  *  return an integer array of the decompressed values.  Being differencing
@@ -282,9 +284,9 @@ function extractSteim1Samples(dataView, offset,  littleEndian) {
  *  @throws SteimException - encoded data length is not multiple of 64
  *  bytes.
  */
-steim2.decode = function (dataView, numSamples, swapBytes, bias) {
+steim2.decode = function (dataView: DataView, numSamples: number, swapBytes: boolean, bias: number): Array<number> {
   if (dataView.byteLength % 64 != 0) {
-    throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.length + ")");
+    throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.byteLength + ")");
   }
   let samples = [];
   let tempSamples;
@@ -293,7 +295,7 @@ steim2.decode = function (dataView, numSamples, swapBytes, bias) {
   let start=0;
   let firstData=0;
   let lastValue = 0;
-      
+
   //System.err.println("DEBUG: number of samples: " + numSamples + ", number of frames: " + numFrames + ", byte array size: " + b.length);
   for (let i=0; i< numFrames ; i++ ) {
     tempSamples = extractSteim2Samples(dataView, i*64, swapBytes);   // returns only differences except for frame 0
@@ -341,7 +343,7 @@ steim2.decode = function (dataView, numSamples, swapBytes, bias) {
  * @param swapBytes reverse the endian-ness of the compressed bytes being read
  * @return integer array of difference (and constant) values
  */
-function extractSteim2Samples(dataView, offset, swapBytes) {
+function extractSteim2Samples(dataView: DataView, offset: number, swapBytes: boolean) :Int32Array {
   /* get nibbles */
   let nibbles = dataView.getUint32(offset, swapBytes);
   let currNibble = 0;
@@ -435,4 +437,3 @@ function extractSteim2Samples(dataView, offset, swapBytes) {
   }
   return out;
 }
-
