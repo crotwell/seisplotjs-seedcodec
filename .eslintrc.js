@@ -1,8 +1,10 @@
 module.exports = {
+    "parser": "babel-eslint",
     "extends": "eslint:recommended",
     "plugins": [
         "standard",
-        "promise"
+        "promise",
+        "flowtype"
     ],
     "env": {
       "es6": true,
