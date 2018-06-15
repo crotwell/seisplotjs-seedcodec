@@ -1,6 +1,6 @@
 {
   "name": "seisplotjs-seedcodec",
-  "version": "1.0.3-alpha.1",
+  "version": "1.0.3",
   "description": "Javascript library for decompressing seismic data.",
   "main": "./lib/seedcodec.js",
   "scripts": {
