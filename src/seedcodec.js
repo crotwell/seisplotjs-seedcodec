@@ -1,7 +1,7 @@
 // @flow
 
 /*global Int32Array*/
-/**
+/*
  * Philip Crotwell
  * University of South Carolina, 2014
  * http://www.seis.sc.edu
@@ -46,9 +46,6 @@ export const SRO = 30;
 /** DWWSSN 16 bit */
 export const DWWSSN = 32;
 
-export let steim1 = {};
-export let steim2 = {};
-
 export class CodecException extends Error {
   constructor(message: string) {
     super(message);
@@ -65,6 +62,20 @@ export class UnsupportedCompressionType extends Error {
   }
 }
 
+/**
+ *  Decompress the samples from the provided DataView and
+ *  return an array of the decompressed values.
+ *  Only 16 bit short, 32 bit int, 32 bit float and 64 bit double
+ *  along with Steim1 and Steim2 are supported.
+ *  @param compressionType compression format as defined in SEED blockette 1000
+ *  @param dataView input DataView to be decoded
+ *  @param numSamples the number of samples that can be decoded from array
+ *  <b>b</b>
+ *  @param littleEndian if true, dataView is little-endian (intel byte order) <b>b</b>.
+ *  @return array of length <b>numSamples</b>.
+ *  @throws CodecException fail to decompress.
+ *  @throws UnsupportedCompressionType unsupported compression type
+ */
 export function decompress(compressionType: number, dataView: DataView, numSamples: number, littleEndian: boolean) :Array<number> {
   // in case of record with no data points, ex detection blockette, which often have compression type
   // set to 0, which messes up the decompresser even though it doesn't matter since there is no data.
@@ -127,11 +138,11 @@ export function decompress(compressionType: number, dataView: DataView, numSampl
       break;
     case STEIM1:
       // steim 1
-      out = steim1.decode(dataView, numSamples, littleEndian, 0);
+      out = decodeSteim1(dataView, numSamples, littleEndian, 0);
       break;
     case STEIM2:
       // steim 2
-      out = steim2.decode(dataView, numSamples, littleEndian, 0);
+      out = decodeSteim2(dataView, numSamples, littleEndian, 0);
       break;
     default:
       // unknown format????
@@ -147,18 +158,17 @@ export function decompress(compressionType: number, dataView: DataView, numSampl
  *  compression, there may be an offset carried over from a previous data
  *  record.  This offset value can be placed in <b>bias</b>, otherwise leave
  *  the value as 0.
- *  @param b input byte array to be decoded
+ *  @param dataView input DataView to be decoded
  *  @param numSamples the number of samples that can be decoded from array
  *  <b>b</b>
- *  @param swapBytes if true, swap reverse the endian-ness of the elements of
- *  byte array <b>b</b>.
+ *  @param littleEndian if true, dataView is little-endian (intel byte order) <b>b</b>.
  *  @param bias the first difference value will be computed from this value.
  *  If set to 0, the method will attempt to use the X(0) constant instead.
  *  @return int array of length <b>numSamples</b>.
- *  @throws SteimException - encoded data length is not multiple of 64
+ *  @throws CodecException - encoded data length is not multiple of 64
  *  bytes.
  */
-steim1.decode = function (dataView: DataView, numSamples: number, littleEndian: boolean, bias: number) {
+export function decodeSteim1(dataView: DataView, numSamples: number, littleEndian: boolean, bias: number) {
   // Decode Steim1 compression format from the provided byte array, which contains numSamples number
   // of samples.  swapBytes is set to true if the value words are to be byte swapped.  bias represents
   // a previous value which acts as a starting constant for continuing differences integration.  At the
@@ -284,7 +294,7 @@ function extractSteim1Samples(dataView: DataView, offset: number,  littleEndian:
  *  @throws SteimException - encoded data length is not multiple of 64
  *  bytes.
  */
-steim2.decode = function (dataView: DataView, numSamples: number, swapBytes: boolean, bias: number): Array<number> {
+export function decodeSteim2(dataView: DataView, numSamples: number, swapBytes: boolean, bias: number): Array<number> {
   if (dataView.byteLength % 64 != 0) {
     throw new CodecException("encoded data length is not multiple of 64 bytes (" + dataView.byteLength + ")");
   }
