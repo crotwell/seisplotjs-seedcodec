@@ -1,0 +1,16 @@
+toc:
+  - name: Core Functionality
+  - decompress
+  - CodecException
+  - UnsupportedCompressionType
+  - name: Compression Types
+    description: Constants for the various compresstion types.
+  - ASCII
+  - SHORT
+  - INT24
+  - INTEGER
+  - FLOAT
+  - DOUBLE
+  - STEIM1
+  - STEIM2
+  - name: Other/Private
