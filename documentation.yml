@@ -1,4 +1,18 @@
 toc:
+  - name: Usage
+    description: |
+      Generally either
+      ```
+      import * as seedcodec from 'seisplotjs-seedcodec'
+      seedcodec.xxxx
+      ```
+      or
+
+      ```
+      import * as seisplotjs from 'seisplotjs'
+      seisplotjs.seedcodec.xxxx
+      ```
+
   - name: Core Functionality
   - decompress
   - CodecException
